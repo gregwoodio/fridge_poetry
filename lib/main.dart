@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:fridge_poetry/wordlist.dart';
 
 import 'widgets/magnet.dart';
 
@@ -9,21 +12,6 @@ class MagnetInfo {
 
   MagnetInfo(this.x, this.y, this.word);
 }
-
-List<MagnetInfo> _magnets = [
-  MagnetInfo(10, 10, "hello"),
-  MagnetInfo(30, 30, "world"),
-  MagnetInfo(50, 50, "drink"),
-  MagnetInfo(70, 70, "coffee"),
-  MagnetInfo(90, 90, "beer"),
-  MagnetInfo(110, 110, "code"),
-  MagnetInfo(130, 130, "read"),
-  MagnetInfo(150, 150, "write"),
-  MagnetInfo(170, 170, "work"),
-  MagnetInfo(190, 190, "play"),
-  MagnetInfo(210, 210, "no"),
-  MagnetInfo(230, 230, "yes"),
-];
 
 void main() {
   runApp(const MyApp());
@@ -39,21 +27,32 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple,
       ),
-      home: const Fridge(),
+      home: Container(child: const Fridge()),
     );
   }
 }
 
-class Fridge extends StatelessWidget {
+class Fridge extends StatefulWidget {
   const Fridge({Key? key}) : super(key: key);
 
   @override
+  State<Fridge> createState() => _FridgeState();
+}
+
+class _FridgeState extends State<Fridge> {
+  late List<MagnetInfo> magnets = [];
+
+  @override
   Widget build(BuildContext context) {
+    if (magnets.isEmpty) {
+      _initMagnets(context);
+    }
+
     return Scaffold(
       body: DragTarget(
         builder: (context, candidateItems, rejectedItems) {
           return Stack(
-            children: _magnets.map((MagnetInfo magnet) {
+            children: magnets.map((MagnetInfo magnet) {
               return Positioned(
                 child: Magnet(magnet.word),
                 left: magnet.x,
@@ -64,11 +63,30 @@ class Fridge extends StatelessWidget {
         },
         onMove: (onMove) {
           var magnet =
-              _magnets.firstWhere((magnet) => magnet.word == onMove.data);
-            magnet.x = onMove.offset.dx;
-            magnet.y = onMove.offset.dy;
+              magnets.firstWhere((magnet) => magnet.word == onMove.data);
+          magnet.x = onMove.offset.dx;
+          magnet.y = onMove.offset.dy;
         },
       ),
     );
+  }
+
+  void _initMagnets(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rnd = Random();
+      final size = context.size ?? const Size(800, 600);
+
+      setState(() {
+        magnets = words
+            .map(
+              (word) => MagnetInfo(
+                rnd.nextDouble() * size.width,
+                rnd.nextDouble() * size.height,
+                word,
+              ),
+            )
+            .toList();
+      });
+    });
   }
 }
